@@ -28,3 +28,7 @@ flowchart TD
         slint
     end
 ```
+
+API Refarence
+https://spec.matrix.org/v1.18/client-server-api/#client-behaviour-8
+However, to determine which state was the most recent when the Lab network was disconnected, it seems necessary to also send the timestamp of when that status was saved.
