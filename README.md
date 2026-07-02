@@ -22,4 +22,9 @@ flowchart TD
         database
         webserver
     end
+    subgraph Lab
+        local
+        NFC
+        slint
+    end
 ```
