@@ -163,3 +163,6 @@ Request parameters
   "error": "requested user was not found."
 }
 ```
+
+# another presence updete system can add!
+If you have right to look lab's internet ARP table, you can use it.
