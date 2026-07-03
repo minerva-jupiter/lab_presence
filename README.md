@@ -10,12 +10,12 @@ An app that visualizes laboratory occupancy status.
 
 ```mermaid
 flowchart TD
-    local --> webserver
+    hub --> webserver
     client --> webserver
-    NFC --> local
-    webserver --> local
+    NFC --> hub
+    webserver --> hub
     webserver --> database
-    slint --> local
+    slint --> hub
     remote --> webserver
 
     subgraph public-cloud
@@ -23,7 +23,7 @@ flowchart TD
         webserver
     end
     subgraph Lab
-        local
+        hub
         NFC
         slint
     end
