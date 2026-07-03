@@ -1,12 +1,12 @@
 # lab_presence
 An app that visualizes laboratory occupancy status.
 
-- local: Maintain status in the laboratory.
+- hub: Maintain status in the laboratory.
 - client: Someone checking presence status from outside.
 - remote: Someone who changes their presence status from an external location
 - NFC: Update your presence status in the laboratory.
 - slint: Display presence status in the laboratory.
-- webserver: Ensuring redundancy for local and cloud presence status, and serving as a gateway for external communication.
+- webserver: Ensuring redundancy for hub and cloud presence status, and serving as a gateway for external communication.
 
 ```mermaid
 flowchart TD
@@ -40,12 +40,12 @@ However, to determine which state was the most recent when the Lab network was d
 |-|-|
 |http method|put|
 |end point|/api/v1/presence/toggle|
-|auth|Authorization: Beare <token>|
+|auth|Authorization: Bearer <token>|
 
 ### Request
 ```json
 {
-    "precense_toggle": true,
+    "presence_toggle": true,
     "timestamp": unixtime
 }
 ```
@@ -70,13 +70,13 @@ The <token> is created by adding the user ID, salt, and the pepper held by the N
 ```
 
 
-## get precense(for slint or sync between the webserver and the hub)
+## get presence(for slint or sync between the webserver and the hub)
 
 |item|spec|
 |-|-|
 |http method|get|
 |end point|/api/v1/presence/{userId}/status|
-|auth|Authorization: Beare <token>|
+|auth|Authorization: Bearer <token>|
 
 <token> is a device-specific access token.
 
@@ -99,7 +99,7 @@ Request parameters
 #### 200
 ```json
 {
-    "precense": string,
+    "presence": string,
     "status_msg": string,
     "timestamp": unixtime
 }
@@ -119,13 +119,13 @@ Request parameters
 }
 ```
 
-## change precense remotely
+## change presence remotely
 
 |item|spec|
 |-|-|
 |http method|put|
 |end point|/api/v1/presence/{userId}/status|
-|auth|Authorizaiton: Beare <token>|
+|auth|Authorizaiton: Bearer <token>|
 
 <token is a device-specific access token.
 
