@@ -34,42 +34,6 @@ https://spec.matrix.org/v1.18/client-server-api/#client-behaviour-8
 However, to determine which state was the most recent when the Lab network was disconnected, it seems necessary to also send the timestamp of when that status was saved.
 
 # specs
-## NFC sends toggle presence(maybe mean entering and leaving the lab)
-
-|item|spec|
-|-|-|
-|http method|put|
-|end point|/api/v1/presence/toggle|
-|auth|Authorization: Bearer <token>|
-
-### Request
-```json
-{
-    "presence_toggle": true,
-    "timestamp": unixtime
-}
-```
-The <token> is created by adding the user ID, salt, and the pepper held by the NFC sender to the hash.
-
-### Response
-|Status|Description|
-|-|-|
-|200|the new presence state was set.|
-|404|user or nfc device is not found|
-
-#### 200
-```json
-{}
-```
-
-#### 404
-```json
-{
-    "errorcode": "Not Found",
-}
-```
-
-
 ## get presence(for slint or sync between the webserver and the hub)
 
 |item|spec|
@@ -78,7 +42,7 @@ The <token> is created by adding the user ID, salt, and the pepper held by the N
 |end point|/api/v1/presence/{userId}/status|
 |auth|Authorization: Bearer <token>|
 
-<token> is a device-specific access token.
+<token> is a hashed onetime device-specific access token.
 
 ### Request
 
@@ -127,7 +91,7 @@ Request parameters
 |end point|/api/v1/presence/{userId}/status|
 |auth|Authorizaiton: Bearer <token>|
 
-<token is a device-specific access token.
+<token> is a hashed onetime device-specific access token.
 
 ### Request
 
@@ -163,6 +127,62 @@ Request parameters
   "error": "requested user was not found."
 }
 ```
+
+## login(to get onetime device-specific access token)
+
+|item|spec|
+|-|-|
+|http method|post|
+|end point|/api/v1/login|
+|auth|none|
+
+### Request
+
+Request parameters
+
+|Name|Type|Description|
+|-|-|-|
+|device_id|string|Required: device id|
+|device_secret|string|Required: device secret(like refresh token)|
+
+```json
+{
+    "device_id": "",
+    "device_secret": ""
+}
+```
+
+### Response
+
+|Status|Description|
+|-|-|
+|200|The presence state for this device.|
+|403|You are not allowed to get onetime access token.|
+|404|There is no presence state for this device. This device may not exist or isn't exposing presence information to you.|
+
+#### 200
+```json
+{
+    "access_token": "",
+    "expires_in": 3600
+}
+```
+#### 403
+```json
+{
+    "errcode": "M_FORBIDDEN",
+    "error": "authorization failed",
+}
+```
+#### 404
+```json
+{
+    "errcode": "M_NOT_FOUND",
+    "error": "requested device was not found."
+}
+```
+
+---
 
 # another presence updete system can add!
 If you have right to look lab's internet ARP table, you can use it.
