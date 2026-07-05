@@ -4,3 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+shared = { path = "../shared" }
+actix-web = { version = "4", features = ["rustls-0_23"] }
+rustls = "0.23"
+rustls-pemfile = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1" }
+log = "0.4"
+env_logger = "0.10"
+rcgen = "0"
+sqlx = { version = "0", features = [] }
+dotenv = "0"
+base64 = "0"
+rand = "0"

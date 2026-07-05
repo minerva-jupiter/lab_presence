@@ -1,4 +1,5 @@
 use dotenv::dotenv;
+use serde::{Deserialize, Serialize};
 use sha2::Digest;
 use std::error::Error;
 
@@ -79,4 +80,35 @@ impl UserId {
 
         Ok(Self { id: result })
     }
+}
+#[derive(Deserialize)]
+pub struct LoginRequest {
+    pub device_id: String,
+    pub device_secret: String,
+}
+
+#[derive(Serialize)]
+pub struct LoginResponse {
+    pub access_token: String,
+    pub expires_in: u32,
+}
+
+#[derive(Serialize)]
+pub struct PresenceResponse {
+    pub presence: String,
+    pub status_msg: String,
+    pub timestamp: u64,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PresenceUpdateRequest {
+    pub presence: String,
+    pub status_msg: String,
+    pub timestamp: u64,
+}
+
+#[derive(Serialize)]
+pub struct ErrorResponse {
+    pub errcode: String,
+    pub error: String,
 }

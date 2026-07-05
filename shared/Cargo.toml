@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 dotenv = "0"
 sha2 = "0"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1" }
