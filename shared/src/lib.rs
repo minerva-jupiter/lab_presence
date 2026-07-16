@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use sha2::Digest;
 use std::error::Error;
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct LabPresence {
     presence: String,
     status_msg: Option<String>,
@@ -104,7 +105,6 @@ pub struct PresenceResponse {
 pub struct PresenceUpdateRequest {
     pub presence: String,
     pub status_msg: String,
-    pub timestamp: u64,
 }
 
 #[derive(Serialize)]

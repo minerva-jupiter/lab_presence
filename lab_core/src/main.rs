@@ -12,13 +12,11 @@ use rustls::{
     pki_types::{CertificateDer, PrivateKeyDer},
 };
 use shared::*;
-use std::collections::HashMap;
 use std::sync::Mutex;
+use std::{collections::HashMap, time::UNIX_EPOCH};
 
 struct AppState {
-    // userId -> PresenceResponse
-    presences: Mutex<HashMap<String, PresenceResponse>>,
-    // token -> userId
+    presences: Mutex<HashMap<String, LabPresence>>,
     tokens: Mutex<HashMap<String, String>>,
 }
 
@@ -107,7 +105,11 @@ async fn get_presence(
     let presences = state.presences.lock().unwrap();
 
     if let Some(presence) = presences.get(&user_id) {
-        HttpResponse::Ok().json(presence)
+        HttpResponse::Ok().json(PresenceResponse {
+            presence: presence.presence().to_string(),
+            status_msg: presence.status_msg().unwrap_or("").to_string(),
+            timestamp: presence.timestamp(),
+        })
     } else {
         HttpResponse::NotFound().json(ErrorResponse {
             errcode: "M_UNKNOWN".to_string(),
@@ -126,14 +128,39 @@ async fn put_presence(
     let user_id = path.into_inner();
     let mut presences = state.presences.lock().unwrap();
 
-    presences.insert(
-        user_id,
-        PresenceResponse {
-            presence: data.presence.clone(),
-            status_msg: data.status_msg.clone(),
-            timestamp: data.timestamp,
-        },
-    );
+    let status_msg = if data.status_msg.is_empty() {
+        None
+    } else {
+        Some(data.status_msg.clone())
+    };
 
-    HttpResponse::Ok().json(serde_json::json!({}))
+    if let Some(existing) = presences.get_mut(&user_id) {
+        match existing.update(
+            data.presence.clone(),
+            status_msg,
+            std::time::SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as u64,
+        ) {
+            Ok(_) => HttpResponse::Ok().json(serde_json::json!({})),
+            Err(e) => HttpResponse::BadRequest().json(ErrorResponse {
+                errcode: "M_BAD_JSON".to_string(),
+                error: e.to_string(),
+            }),
+        }
+    } else {
+        presences.insert(
+            user_id,
+            LabPresence::new(
+                data.presence.clone(),
+                status_msg,
+                std::time::SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as u64,
+            ),
+        );
+        HttpResponse::Ok().json(serde_json::json!({}))
+    }
 }

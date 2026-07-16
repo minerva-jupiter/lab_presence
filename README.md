@@ -100,6 +100,12 @@ Request parameters
 |Name|Type|Description|
 |-|-|-|
 |userId|string|Required: The user whose presence state to get|
+```json
+{
+    "presence": string,
+    "status_msg": string,
+}
+```
 
 ### Response
 
