@@ -26,7 +26,7 @@ async fn index(req: HttpRequest) -> HttpResponse {
 
     HttpResponse::Ok().content_type(ContentType::html()).body(
         "<!DOCTYPE html><html><body>\
-            <p>Welcome to your TLS-secured homepage!</p>\
+            <h1>Lab Presence</h1>\
         </body></html>",
     )
 }
@@ -162,5 +162,90 @@ async fn put_presence(
             ),
         );
         HttpResponse::Ok().json(serde_json::json!({}))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{App, test, web};
+    use shared::{LoginRequest, LoginResponse, PresenceUpdateRequest};
+
+    #[actix_web::test]
+    async fn test_auth_and_presence_flow() {
+        let state = web::Data::new(AppState {
+            presences: Mutex::new(HashMap::new()),
+            tokens: Mutex::new(HashMap::new()),
+        });
+
+        let app = test::init_service(
+            App::new()
+                .app_data(state.clone())
+                .service(login)
+                .service(get_presence)
+                .service(put_presence),
+        )
+        .await;
+
+        let invalid_login_req = test::TestRequest::post()
+            .uri("/api/v1/login")
+            .set_json(&LoginRequest {
+                device_id: "nfc_reader_01".to_string(),
+                device_secret: "wrong_secret".to_string(),
+            })
+            .to_request();
+
+        let resp = test::call_service(&app, invalid_login_req).await;
+        assert_eq!(resp.status(), 403);
+
+        let valid_login_req = test::TestRequest::post()
+            .uri("/api/v1/login")
+            .set_json(&LoginRequest {
+                device_id: "nfc".to_string(),
+                device_secret: "nfc".to_string(),
+            })
+            .to_request();
+
+        let resp = test::call_service(&app, valid_login_req).await;
+        assert_eq!(resp.status(), 200);
+
+        let login_res: LoginResponse = test::read_body_json(resp).await;
+        let token = login_res.access_token;
+        assert!(!token.is_empty());
+
+        let unauth_put_req = test::TestRequest::put()
+            .uri("/api/v1/presence/user_hash_123/status")
+            .set_json(&PresenceUpdateRequest {
+                presence: "online".to_string(),
+                status_msg: "In Lab".to_string(),
+            })
+            .to_request();
+
+        let resp = test::call_service(&app, unauth_put_req).await;
+        assert_eq!(resp.status(), 403);
+
+        let auth_put_req = test::TestRequest::put()
+            .uri("/api/v1/presence/user_hash_123/status")
+            .insert_header(("Authorization", format!("Bearer {}", token)))
+            .set_json(&PresenceUpdateRequest {
+                presence: "online".to_string(),
+                status_msg: "In Lab".to_string(),
+            })
+            .to_request();
+
+        let resp = test::call_service(&app, auth_put_req).await;
+        assert_eq!(resp.status(), 200);
+
+        let get_req = test::TestRequest::get()
+            .uri("/api/v1/presence/user_hash_123/status")
+            .insert_header(("Authorization", format!("Bearer {}", token)))
+            .to_request();
+
+        let resp = test::call_service(&app, get_req).await;
+        assert_eq!(resp.status(), 200);
+
+        let presence_res: PresenceResponse = test::read_body_json(resp).await;
+        assert_eq!(presence_res.presence, "online");
+        assert_eq!(presence_res.status_msg, "In Lab");
     }
 }

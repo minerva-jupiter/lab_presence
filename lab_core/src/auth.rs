@@ -9,6 +9,7 @@ use std::env;
 use std::future::{Ready, ready};
 
 pub struct AuthenticatedDevice {
+    #[allow(dead_code)]
     pub device_id: String,
 }
 

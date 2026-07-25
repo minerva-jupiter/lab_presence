@@ -1,6 +1,4 @@
-use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
-use sha2::Digest;
 use std::error::Error;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -63,38 +61,52 @@ impl LabPresence {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UserId {
     pub id: String,
 }
-impl UserId {
-    pub fn get_id(idm: String) -> Result<Self, Box<dyn std::error::Error>> {
-        let _ = dotenv();
-        let salt = std::env::var("SALT")?;
-        let mut hasher = sha2::Sha256::new();
-        hasher.update(idm.as_bytes());
-        hasher.update(salt.as_bytes());
-        let result = hasher
-            .finalize()
-            .iter()
-            .map(|b| format!("{:02x}", b))
-            .collect::<String>();
 
-        Ok(Self { id: result })
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct User {
+    pub id: UserId,
+    pub card_serial_number: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct MemberDirectory {
+    pub users: Vec<User>,
+}
+impl MemberDirectory {
+    pub fn new(users: Vec<User>) -> Self {
+        Self { users }
+    }
+    pub fn init_from_env() -> Result<Self, Box<dyn std::error::Error>> {
+        let member_directory = std::env::var("MEMBER_DIRECTORY")?;
+        let users: Vec<User> = serde_json::from_str(&member_directory)?;
+        Ok(Self::new(users))
+    }
+    pub fn inquire(&self, card_serial_number: &str) -> Result<UserId, Box<dyn std::error::Error>> {
+        self.users
+            .iter()
+            .find(|u| u.card_serial_number == card_serial_number)
+            .map(|u| u.id.clone())
+            .ok_or_else(|| "User not found".into())
     }
 }
-#[derive(Deserialize)]
+
+#[derive(Serialize, Deserialize)]
 pub struct LoginRequest {
     pub device_id: String,
     pub device_secret: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LoginResponse {
     pub access_token: String,
     pub expires_in: u32,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct PresenceResponse {
     pub presence: String,
     pub status_msg: String,
@@ -107,7 +119,7 @@ pub struct PresenceUpdateRequest {
     pub status_msg: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ErrorResponse {
     pub errcode: String,
     pub error: String,

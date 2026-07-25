@@ -4,3 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+shared = { path = "../shared" }
+
+ureq = { version = "3", features = ["json"] }
+pcsc = { version = "2" }
+dotenvy = { version = "0"}
+serde_json = { version = "1" }
+tokio = { version = "1", features = ["fs"] }
+wiremock = { version = "0.6.5" }
